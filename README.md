@@ -131,8 +131,19 @@ python flash_monitor.py --all
 
 ### 3. Launch Desktop GUI
 
+You can run the Python script directly:
 ```powershell
 python dashboard_qt.py
+```
+
+Or run the precompiled standalone executable:
+```powershell
+.\dist\BenchMonitor.exe
+```
+
+To build a fresh standalone `.exe` using PyInstaller:
+```powershell
+.\build_exe.bat
 ```
 
 ---
@@ -157,6 +168,7 @@ bench-monitor/
 │   ├── display_manager.cpp
 │   └── main.cpp                # FreeRTOS setup and task loops
 ├── dashboard_qt.py             # Desktop telemetry UI in PyQt6 + pyqtgraph
+├── build_exe.bat               # One-click PyInstaller script for Windows .exe
 ├── flash_monitor.py            # CLI helper to build, flash, and monitor serial output
 ├── platformio.ini              # PlatformIO project configuration
 ├── LICENSE                     # GNU General Public License v3.0 (GPLv3)

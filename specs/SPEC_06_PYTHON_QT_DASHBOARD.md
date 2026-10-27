@@ -64,3 +64,25 @@ Ela se comunica diretamente com a porta serial nativa do ESP32-C5 (**COM9** ou s
                                | USB COM9 (115200 bps)
                      [ ESP32-C5 DevKitC-1 ]
 ```
+
+---
+
+## 4. Empacotamento Autônomo para Windows (.exe)
+
+Para permitir a execução em máquinas Windows sem instalação prévia de Python e bibliotecas, a dashboard é empacotada em arquivo único (`dist/BenchMonitor.exe`) usando **PyInstaller**:
+
+```powershell
+python -m PyInstaller --onefile --noconsole --name "BenchMonitor" `
+    --exclude-module PySide6 --exclude-module PyQt5 --exclude-module PySide2 `
+    --exclude-module matplotlib --exclude-module scipy --exclude-module IPython `
+    --exclude-module botocore --exclude-module pyarrow `
+    --hidden-import serial --hidden-import serial.tools.list_ports `
+    dashboard_qt.py
+```
+
+### Características do Executável Gerado:
+- **Arquivo Único (`--onefile`):** Contém o runtime Python 3.13, bibliotecas PyQt6, pyqtgraph, pandas, openpyxl, pyserial e DLLs de suporte C runtime.
+- **Janela Limpa (`--noconsole`):** Execução em segundo plano sem janela de prompt de comando preta.
+- **Isolamento de Bindings Qt:** Exclusão explícita de `PySide6`, `PyQt5` e `PySide2` para eliminar conflitos de importação no PyInstaller.
+- **Script Auxiliar:** O arquivo `build_exe.bat` na raiz automatiza a recompilação com um duplo clique.
+
