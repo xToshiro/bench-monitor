@@ -57,7 +57,7 @@ void I2CBusManager::recoverBus() {
     pinMode(PIN_I2C_SDA, INPUT_PULLUP);
     pinMode(PIN_I2C_SCL, OUTPUT);
 
-    // Envia 9 pulsos de clock em SCL para forçar o escravo travado a soltar a linha SDA
+    // 9 pulsos em SCL liberam dispositivos I2C travados retendo SDA em nível lógico baixo
     for (int i = 0; i < 9; i++) {
         digitalWrite(PIN_I2C_SCL, HIGH);
         delayMicroseconds(5);
@@ -65,7 +65,6 @@ void I2CBusManager::recoverBus() {
         delayMicroseconds(5);
     }
 
-    // Gera condição de STOP
     pinMode(PIN_I2C_SDA, OUTPUT);
     digitalWrite(PIN_I2C_SDA, LOW);
     delayMicroseconds(5);

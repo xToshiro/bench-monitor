@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-dashboard_qt.py - Estação de Telemetria e Monitoramento de Bancada ESP32-C5
-Interface Gráfica de Alta Performance em PyQt6 e pyqtgraph com estatísticas e exportação.
-Sensores integrados: Bosch BME280 (Temp, Umid, Pressão) e Winsen MH-Z16 (CO2 NDIR).
-"""
-
 import sys
 import os
 import time
 import json
-import random
 from collections import deque
 from datetime import datetime
 
@@ -31,14 +24,11 @@ from PyQt6.QtWidgets import (
 
 import pyqtgraph as pg
 
-# Configurações globais do pyqtgraph
-pg.setConfigOption("background", "#0f172a")  # Slate 900
-pg.setConfigOption("foreground", "#94a3b8")  # Slate 400
+pg.setConfigOption("background", "#0f172a")
+pg.setConfigOption("foreground", "#94a3b8")
 pg.setConfigOption("antialias", True)
 
-# ==============================================================================
-# Thread de Comunicação Serial (Exclusivo Hardware Físico)
-# ==============================================================================
+
 class SerialWorker(QThread):
     data_received = pyqtSignal(dict)
     raw_line_received = pyqtSignal(str)
@@ -54,7 +44,6 @@ class SerialWorker(QThread):
     def run(self):
         try:
             self._serial = serial.Serial(self.port, self.baudrate, timeout=1.0)
-            # Pulso de reset suave via DTR/RTS
             self._serial.setDTR(False)
             self._serial.setRTS(True)
             time.sleep(0.1)
@@ -74,7 +63,6 @@ class SerialWorker(QThread):
 
                 self.raw_line_received.emit(line)
 
-                # Verifica se a linha contém dados estruturados em JSON
                 if line.startswith("{") and line.endswith("}"):
                     try:
                         data = json.loads(line)
@@ -96,9 +84,6 @@ class SerialWorker(QThread):
         self.wait(1500)
 
 
-# ==============================================================================
-# Widget Card de Métrica (KPI Card)
-# ==============================================================================
 class MetricCard(QFrame):
     def __init__(self, title, unit="", accent_color="#38bdf8", parent=None):
         super().__init__(parent)
@@ -120,7 +105,6 @@ class MetricCard(QFrame):
         layout.setContentsMargins(12, 8, 12, 8)
         layout.setSpacing(2)
 
-        # Cabeçalho do Card
         h_layout = QHBoxLayout()
         self.lbl_title = QLabel(title.upper())
         self.lbl_title.setStyleSheet("color: #94a3b8; font-size: 10px; font-weight: bold; letter-spacing: 0.5px;")
@@ -131,7 +115,6 @@ class MetricCard(QFrame):
         h_layout.addWidget(self.lbl_badge)
         layout.addLayout(h_layout)
 
-        # Valor Principal
         val_layout = QHBoxLayout()
         self.lbl_value = QLabel("--.-")
         self.lbl_value.setStyleSheet("color: #f8fafc; font-size: 22px; font-weight: bold;")
@@ -142,7 +125,6 @@ class MetricCard(QFrame):
         val_layout.addStretch()
         layout.addLayout(val_layout)
 
-        # Linha de Estatísticas Secundárias (Min / Méd / Max)
         self.lbl_stats = QLabel("Mín: -- | Méd: -- | Máx: --")
         self.lbl_stats.setStyleSheet("color: #64748b; font-size: 10px;")
         layout.addWidget(self.lbl_stats)
@@ -162,16 +144,12 @@ class MetricCard(QFrame):
             self.lbl_stats.setText(f"Mín: {min_v:.1f} | Méd: {avg_v:.1f} | Máx: {max_v:.1f}")
 
 
-# ==============================================================================
-# Janela Principal do Dashboard
-# ==============================================================================
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("ESP32-C5 Bancada - Telemetria e Análise Sensorial")
         self.resize(1366, 900)
 
-        # Armazenamento em memória (histórico com até 5000 amostras)
         self.history = deque(maxlen=5000)
         self.serial_worker = None
         self.is_recording = True
@@ -179,10 +157,9 @@ class MainWindow(QMainWindow):
         self.apply_theme()
         self.init_ui()
 
-        # Timer de atualização visual periódica da interface
         self.ui_timer = QTimer()
         self.ui_timer.timeout.connect(self.update_plots_and_kpis)
-        self.ui_timer.start(500)  # 2 Hz é perfeito para fluidez sem sobrecarga
+        self.ui_timer.start(500)
 
     def apply_theme(self):
         self.setStyleSheet("""
@@ -290,13 +267,9 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(16, 14, 16, 14)
         main_layout.setSpacing(12)
 
-        # 1. Barra de Controles Superior
         main_layout.addLayout(self.create_control_toolbar())
-
-        # 2. Grid de Cards KPI
         main_layout.addLayout(self.create_kpi_cards())
 
-        # 3. Divisor Central (Gráficos no topo, Tabelas/Logs na base)
         self.splitter = QSplitter(Qt.Orientation.Vertical)
         self.splitter.addWidget(self.create_charts_area())
         self.splitter.addWidget(self.create_bottom_tabs())
@@ -308,14 +281,10 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.splitter)
 
-    # -------------------------------------------------------------------------
-    # Layouts e Componentes Visuais
-    # -------------------------------------------------------------------------
     def create_control_toolbar(self):
         layout = QHBoxLayout()
         layout.setSpacing(10)
 
-        # Grupo Conexão Serial
         lbl_port = QLabel("Porta Serial:")
         lbl_port.setStyleSheet("color: #94a3b8; font-weight: bold; font-size: 11px;")
         self.cb_ports = QComboBox()
@@ -335,7 +304,6 @@ class MainWindow(QMainWindow):
         self.btn_connect.setObjectName("btnConnect")
         self.btn_connect.clicked.connect(self.toggle_connection)
 
-        # Status Badge
         self.lbl_status = QLabel("Desconectado")
         self.lbl_status.setStyleSheet("background-color: #ef444422; color: #f87171; border: 1px solid #ef444455; border-radius: 4px; padding: 4px 8px; font-weight: bold; font-size: 11px;")
 
@@ -348,7 +316,6 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.lbl_status)
         layout.addStretch()
 
-        # Botões de Exportação e Sobre
         self.btn_export_csv = QPushButton("📥 Exportar CSV")
         self.btn_export_csv.setObjectName("btnExport")
         self.btn_export_csv.clicked.connect(lambda: self.export_data("csv"))
@@ -378,7 +345,6 @@ class MainWindow(QMainWindow):
         layout = QHBoxLayout()
         layout.setSpacing(12)
 
-        # Cards KPI com grandezas puras
         self.card_co2 = MetricCard("Dióxido de Carbono (CO2)", "ppm", accent_color="#10b981")
         self.card_temp = MetricCard("Temperatura", "°C", accent_color="#f97316")
         self.card_hum = MetricCard("Umidade Relativa", "%", accent_color="#06b6d4")
@@ -399,20 +365,17 @@ class MainWindow(QMainWindow):
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(10)
 
-        # Gráfico 1: Dióxido de Carbono (CO2)
         self.plot_co2 = pg.PlotWidget(title="<b style='color:#10b981; font-size:12px;'>Dióxido de Carbono (CO2)</b>")
         self.plot_co2.showGrid(x=True, y=True, alpha=0.2)
         self.plot_co2.setLabel("left", "Concentração (ppm)", color="#94a3b8")
         self.plot_co2.setLabel("bottom", "Amostras", color="#94a3b8")
         self.plot_co2.setMinimumHeight(130)
         self.curve_co2 = self.plot_co2.plot(pen=pg.mkPen(color="#10b981", width=2))
-        # Linhas de referência para ar seguro (800 ppm) e moderado (1200 ppm)
         self.line_co2_safe = pg.InfiniteLine(pos=800, angle=0, pen=pg.mkPen(color="#eab308", width=1, style=Qt.PenStyle.DashLine))
         self.line_co2_alert = pg.InfiniteLine(pos=1200, angle=0, pen=pg.mkPen(color="#ef4444", width=1, style=Qt.PenStyle.DashLine))
         self.plot_co2.addItem(self.line_co2_safe)
         self.plot_co2.addItem(self.line_co2_alert)
 
-        # Gráfico 2: Temperatura e Ponto de Orvalho
         self.plot_temp = pg.PlotWidget(title="<b style='color:#f97316; font-size:12px;'>Temperatura e Ponto de Orvalho</b>")
         self.plot_temp.showGrid(x=True, y=True, alpha=0.2)
         self.plot_temp.setLabel("left", "Temperatura (°C)", color="#94a3b8")
@@ -422,7 +385,6 @@ class MainWindow(QMainWindow):
         self.curve_temp = self.plot_temp.plot(pen=pg.mkPen(color="#f97316", width=2), name="Temp (°C)")
         self.curve_dew = self.plot_temp.plot(pen=pg.mkPen(color="#38bdf8", width=1.5, style=Qt.PenStyle.DashLine), name="Orvalho (°C)")
 
-        # Gráfico 3: Umidade Relativa do Ar
         self.plot_hum = pg.PlotWidget(title="<b style='color:#06b6d4; font-size:12px;'>Umidade Relativa do Ar</b>")
         self.plot_hum.showGrid(x=True, y=True, alpha=0.2)
         self.plot_hum.setLabel("left", "Umidade (% RH)", color="#94a3b8")
@@ -430,7 +392,6 @@ class MainWindow(QMainWindow):
         self.plot_hum.setMinimumHeight(130)
         self.curve_hum = self.plot_hum.plot(pen=pg.mkPen(color="#06b6d4", width=2))
 
-        # Gráfico 4: Pressão Atmosférica
         self.plot_press = pg.PlotWidget(title="<b style='color:#8b5cf6; font-size:12px;'>Pressão Atmosférica</b>")
         self.plot_press.showGrid(x=True, y=True, alpha=0.2)
         self.plot_press.setLabel("left", "Pressão (hPa)", color="#94a3b8")
@@ -449,7 +410,6 @@ class MainWindow(QMainWindow):
         tabs = QTabWidget()
         tabs.setMinimumHeight(260)
 
-        # Tab 1: Estatísticas Estatísticas Descritivas
         tab_stats = QWidget()
         l_stats = QVBoxLayout(tab_stats)
         l_stats.setContentsMargins(6, 6, 6, 6)
@@ -463,7 +423,6 @@ class MainWindow(QMainWindow):
         l_stats.addWidget(self.tbl_stats)
         tabs.addTab(tab_stats, "📈 Estatísticas Consolidadas")
 
-        # Tab 2: Últimas Amostras Recebidas
         tab_samples = QWidget()
         l_samples = QVBoxLayout(tab_samples)
         l_samples.setContentsMargins(6, 6, 6, 6)
@@ -477,7 +436,6 @@ class MainWindow(QMainWindow):
         l_samples.addWidget(self.tbl_samples)
         tabs.addTab(tab_samples, "📋 Tabela de Dados Históricos")
 
-        # Tab 3: Console Serial RAW
         tab_console = QWidget()
         l_console = QVBoxLayout(tab_console)
         l_console.setContentsMargins(6, 6, 6, 6)
@@ -489,9 +447,6 @@ class MainWindow(QMainWindow):
 
         return tabs
 
-    # -------------------------------------------------------------------------
-    # Operações de Porta Serial e Dados
-    # -------------------------------------------------------------------------
     def refresh_serial_ports(self):
         self.cb_ports.clear()
         ports = serial.tools.list_ports.comports()
@@ -552,7 +507,6 @@ class MainWindow(QMainWindow):
 
         self.history.append(sample)
 
-        # Adiciona na tabela de amostras (mantendo as 100 mais recentes)
         row = self.tbl_samples.rowCount()
         if row >= 100:
             self.tbl_samples.removeRow(0)
@@ -578,19 +532,13 @@ class MainWindow(QMainWindow):
             item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self.tbl_samples.setItem(row, col, item)
 
-    # -------------------------------------------------------------------------
-    # Atualização Periódica de Gráficos e Estatísticas
-    # -------------------------------------------------------------------------
     def update_plots_and_kpis(self):
         if not self.history:
             return
 
-        # Converte o histórico recente em DataFrame pandas
         df = pd.DataFrame(list(self.history))
         latest = self.history[-1]
 
-        # 1. Atualização dos Cards KPI
-        # CO2
         if "co2_ppm" in df.columns:
             co2_cur = latest.get("co2_ppm", 0)
             badge_text = "EXCELENTE"
@@ -619,7 +567,6 @@ class MainWindow(QMainWindow):
                 max_v=df["co2_ppm"].max()
             )
 
-        # Temperatura
         if "temp_c" in df.columns:
             temp_cur = latest.get("temp_c", 0.0)
             self.card_temp.update_value(
@@ -631,7 +578,6 @@ class MainWindow(QMainWindow):
                 max_v=df["temp_c"].max()
             )
 
-        # Umidade
         if "hum_pct" in df.columns:
             hum_cur = latest.get("hum_pct", 0.0)
             hum_badge = "Conforto" if 40 <= hum_cur <= 70 else "Atenção"
@@ -644,7 +590,6 @@ class MainWindow(QMainWindow):
                 max_v=df["hum_pct"].max()
             )
 
-        # Pressão
         if "press_hpa" in df.columns:
             press_cur = latest.get("press_hpa", 0.0)
             self.card_press.update_value(
@@ -656,7 +601,6 @@ class MainWindow(QMainWindow):
                 max_v=df["press_hpa"].max()
             )
 
-        # Sistema
         uptime = latest.get("uptime_s", 0)
         u_min = (uptime // 60) % 60
         u_hr = uptime // 3600
@@ -665,7 +609,6 @@ class MainWindow(QMainWindow):
         self.card_sys.lbl_badge.setText(f"{heap_kb} KB Heap")
         self.card_sys.lbl_stats.setText(f"Amostras: {len(self.history)} | SoC: RISC-V 240MHz")
 
-        # 2. Atualização dos Gráficos (Últimos 150 pontos para máxima performance)
         sub_df = df.tail(150)
         x_indices = np.arange(len(sub_df))
 
@@ -683,7 +626,6 @@ class MainWindow(QMainWindow):
         if "press_hpa" in sub_df.columns:
             self.curve_press.setData(x_indices, sub_df["press_hpa"].values)
 
-        # 3. Atualização da Tabela de Estatísticas Consolidadas
         metrics = [
             ("CO2 NDIR (ppm)", "co2_ppm", 0),
             ("Temperatura (°C)", "temp_c", 2),
@@ -715,9 +657,6 @@ class MainWindow(QMainWindow):
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
                     self.tbl_stats.setItem(row_idx, col_idx, item)
 
-    # -------------------------------------------------------------------------
-    # Limpeza e Exportação de Dados
-    # -------------------------------------------------------------------------
     def clear_history(self):
         confirm = QMessageBox.question(
             self, "Confirmar Limpeza",
@@ -819,9 +758,6 @@ class MainWindow(QMainWindow):
         event.accept()
 
 
-# ==============================================================================
-# Ponto de Entrada da Aplicação
-# ==============================================================================
 def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")

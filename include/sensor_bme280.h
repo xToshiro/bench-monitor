@@ -8,12 +8,12 @@
 
 struct BME280Readings {
     bool valid;
-    float temperature;   // Graus Celsius (°C)
-    float humidity;      // Umidade Relativa (%)
-    float pressure;      // Pressão Atmosférica (hPa)
-    float altitude;      // Altitude Barométrica Estimada (m)
-    float dew_point;     // Ponto de Orvalho Calculado (°C)
-    uint8_t i2c_address; // Endereço I2C em uso (0x76 ou 0x77)
+    float temperature;
+    float humidity;
+    float pressure;
+    float altitude;
+    float dew_point;
+    uint8_t i2c_address;
     uint32_t last_read_ms;
     uint32_t error_count;
 };

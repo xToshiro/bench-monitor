@@ -28,17 +28,14 @@ bool SensorMHZ16::read(MHZ16Readings& out) {
         return false;
     }
 
-    // Limpa qualquer dado residual no buffer de recepção
     while (_serial.available() > 0) {
         _serial.read();
     }
 
-    // Telegrama padrão de requisição de leitura (0x86)
     const uint8_t cmd[9] = {0xFF, 0x01, 0x86, 0x00, 0x00, 0x00, 0x00, 0x00, 0x79};
     _serial.write(cmd, 9);
     _serial.flush();
 
-    // Aguarda a resposta de 9 bytes (timeout de 250 ms)
     uint32_t start_wait = millis();
     while (_serial.available() < 9 && (millis() - start_wait < 250)) {
         delay(5);
@@ -48,14 +45,12 @@ bool SensorMHZ16::read(MHZ16Readings& out) {
         _consecutive_errors++;
         out.valid = false;
         out.error_count = _consecutive_errors;
-        // Serial.printf("[MH-Z16] Timeout na resposta UART (Bytes recebidos: %d)\n", _serial.available());
         return false;
     }
 
     uint8_t response[9];
     _serial.readBytes(response, 9);
 
-    // Validação do cabeçalho e comando
     if (response[0] != 0xFF || response[1] != 0x86) {
         _consecutive_errors++;
         out.valid = false;
@@ -64,7 +59,6 @@ bool SensorMHZ16::read(MHZ16Readings& out) {
         return false;
     }
 
-    // Validação matemática do checksum
     uint8_t expected_crc = calculateChecksum(response);
     if (response[8] != expected_crc) {
         _consecutive_errors++;
@@ -74,10 +68,7 @@ bool SensorMHZ16::read(MHZ16Readings& out) {
         return false;
     }
 
-    // Cálculo da concentração de CO2
     uint16_t ppm = ((uint16_t)response[2] << 8) | response[3];
-
-    // Verificação de plausibilidade física (0 a 10000 ppm)
     if (ppm > 10000) {
         _consecutive_errors++;
         out.valid = false;
@@ -91,7 +82,6 @@ bool SensorMHZ16::read(MHZ16Readings& out) {
     out.last_read_ms = millis();
     out.error_count = 0;
 
-    // Status do pré-aquecimento térmico
     uint32_t elapsed_s = (millis() - _boot_time_ms) / 1000;
     if (elapsed_s < MHZ16_WARMUP_SEC) {
         out.is_warming_up = true;

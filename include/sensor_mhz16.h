@@ -4,12 +4,12 @@
 #include "config.h"
 
 struct MHZ16Readings {
-    bool valid;                  // true se a leitura foi bem-sucedida
-    uint16_t co2_ppm;            // Concentração de CO2 em ppm
-    bool is_warming_up;          // true se estiver nos primeiros 180s
-    uint16_t warmup_remaining_s; // Segundos restantes de aquecimento
-    uint32_t last_read_ms;       // Timestamp da última leitura válida
-    uint32_t error_count;        // Contador de leituras com falha/checksum inválido
+    bool valid;
+    uint16_t co2_ppm;
+    bool is_warming_up;
+    uint16_t warmup_remaining_s;
+    uint32_t last_read_ms;
+    uint32_t error_count;
 };
 
 class SensorMHZ16 {

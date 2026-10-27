@@ -12,7 +12,6 @@ bool SensorBME280::begin(uint8_t forced_addr) {
             _address = forced_addr;
         }
     } else {
-        // Tenta primeiro o endereço primário (0x76), depois o alternativo (0x77)
         if (_bme.begin(BME280_I2C_ADDR_PRIMARY, &Wire)) {
             _connected = true;
             _address = BME280_I2C_ADDR_PRIMARY;
@@ -24,11 +23,10 @@ bool SensorBME280::begin(uint8_t forced_addr) {
 
     if (_connected) {
         Serial.printf("[BME280] Sensor inicializado com SUCESSO no endereco 0x%02X!\n", _address);
-        // Ajusta perfil de amostragem recomendado para bancada
         _bme.setSampling(Adafruit_BME280::MODE_NORMAL,
-                         Adafruit_BME280::SAMPLING_X2,   // Temperatura
-                         Adafruit_BME280::SAMPLING_X16,  // Pressão
-                         Adafruit_BME280::SAMPLING_X1,   // Umidade
+                         Adafruit_BME280::SAMPLING_X2,
+                         Adafruit_BME280::SAMPLING_X16,
+                         Adafruit_BME280::SAMPLING_X1,
                          Adafruit_BME280::FILTER_X16,
                          Adafruit_BME280::STANDBY_MS_500);
         _consecutive_errors = 0;
@@ -41,7 +39,6 @@ bool SensorBME280::begin(uint8_t forced_addr) {
 
 bool SensorBME280::read(BME280Readings& out) {
     if (!_connected) {
-        // Tenta reconectar a cada chamada caso esteja offline
         if (!begin()) {
             out.valid = false;
             out.error_count = ++_consecutive_errors;
@@ -53,7 +50,6 @@ bool SensorBME280::read(BME280Readings& out) {
     float hum = _bme.readHumidity();
     float press_pa = _bme.readPressure();
 
-    // Verificação de plausibilidade física
     if (isnan(temp) || isnan(hum) || isnan(press_pa) || press_pa < 30000.0f) {
         _consecutive_errors++;
         out.valid = false;
@@ -61,7 +57,7 @@ bool SensorBME280::read(BME280Readings& out) {
         Serial.printf("[BME280] Falha na leitura (Tentativa %lu com erro)\n", (unsigned long)_consecutive_errors);
 
         if (_consecutive_errors >= MAX_I2C_FAILURES_BEFORE_RESET) {
-            _connected = false; // Força re-inicialização na próxima tentativa
+            _connected = false;
         }
         return false;
     }
@@ -70,7 +66,7 @@ bool SensorBME280::read(BME280Readings& out) {
     out.valid = true;
     out.temperature = temp;
     out.humidity = hum;
-    out.pressure = press_pa / 100.0f; // Converte Pa para hPa
+    out.pressure = press_pa / 100.0f;
     out.altitude = calculateAltitude(out.pressure);
     out.dew_point = calculateDewPoint(temp, hum);
     out.i2c_address = _address;

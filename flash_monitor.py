@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-flash_monitor.py - Utilitário de Gravação e Monitoramento Serial para ESP32-C5 Bancada
-Suporta gravação via PlatformIO CLI e monitoramento interativo na porta COM9.
-"""
-
 import sys
 import os
 import time
@@ -15,7 +10,6 @@ DEFAULT_PORT = "COM9"
 DEFAULT_BAUD = 115200
 
 def get_pio_executable():
-    """Localiza o binário executável do PlatformIO no perfil do usuário."""
     home = os.environ.get("USERPROFILE") or os.environ.get("HOME")
     candidates = [
         os.path.join(home, ".platformio", "penv", "Scripts", "pio.exe"),
@@ -28,7 +22,6 @@ def get_pio_executable():
     return "pio"
 
 def run_build():
-    """Executa a compilação do firmware."""
     pio = get_pio_executable()
     print("🔨 [BUILD] Compilando firmware para ESP32-C5...")
     env = os.environ.copy()
@@ -38,7 +31,6 @@ def run_build():
     return res.returncode == 0
 
 def run_flash(port=DEFAULT_PORT):
-    """Grava o firmware compilado no ESP32-C5 via porta serial."""
     pio = get_pio_executable()
     print(f"⚡ [FLASH] Gravando firmware na porta {port}...")
     env = os.environ.copy()
@@ -48,18 +40,15 @@ def run_flash(port=DEFAULT_PORT):
     return res.returncode == 0
 
 def run_monitor(port=DEFAULT_PORT, baud=DEFAULT_BAUD):
-    """Conecta ao ESP32-C5 e monitora o fluxo serial e telemetria JSON."""
     try:
         import serial
     except ImportError:
-        print("⚠️ pyserial não encontrado. Instalando pyserial temporariamente...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyserial"])
         import serial
 
     print(f"📡 [MONITOR] Conectando à porta {port} a {baud} bps (Ctrl+C para sair)...")
     try:
         ser = serial.Serial(port, baud, timeout=1.0)
-        # Pulso suave de reset
         ser.setDTR(False)
         ser.setRTS(True)
         time.sleep(0.1)
@@ -74,7 +63,6 @@ def run_monitor(port=DEFAULT_PORT, baud=DEFAULT_BAUD):
             if not line:
                 continue
 
-            # Formatação visual amigável para mensagens de telemetria
             if line.startswith("{") and line.endswith("}"):
                 print(f"📊 [TELEMETRIA JSON] {line}")
             elif "[I2C]" in line:

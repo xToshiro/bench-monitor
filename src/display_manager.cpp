@@ -56,7 +56,6 @@ void DisplayManager::showSplashScreen() {
     _display.setCursor(22, 34);
     _display.print("I2C:8,9  UART:5,4");
 
-    // Barra de progresso animada de boot
     _display.drawRect(20, 48, 88, 6, SSD1306_WHITE);
     for (int w = 0; w <= 84; w += 14) {
         _display.fillRect(22, 50, w, 2, SSD1306_WHITE);
@@ -75,7 +74,6 @@ void DisplayManager::drawHeader(const char* title, uint8_t page_num) {
     _display.setCursor(80, 1);
     _display.printf("P%d/%d", page_num, SCREEN_COUNT);
 
-    // Heartbeat animado no canto superior direito
     _heartbeat_frame = (_heartbeat_frame + 1) % 4;
     int hx = 122;
     int hy = 4;
@@ -91,7 +89,6 @@ void DisplayManager::drawHeader(const char* title, uint8_t page_num) {
 void DisplayManager::update(const BME280Readings& bme, const MHZ16Readings& co2) {
     if (!_initialized) return;
 
-    // Rotação periódica de telas a cada 4 segundos
     if (millis() - _last_screen_switch_ms >= SCREEN_CYCLE_TIME_MS) {
         nextScreen();
         _last_screen_switch_ms = millis();
@@ -99,7 +96,6 @@ void DisplayManager::update(const BME280Readings& bme, const MHZ16Readings& co2)
 
     _display.clearDisplay();
 
-    // Se nenhum dos sensores estiver respondendo, exibe tela de diagnóstico
     if (!bme.valid && !co2.valid) {
         showSensorOfflineScreen();
         _display.display();
@@ -141,22 +137,18 @@ void DisplayManager::renderScreenClimate(const BME280Readings& readings) {
         return;
     }
 
-    // Temperatura em destaque
     _display.setTextSize(2);
     _display.setCursor(4, 15);
     _display.printf("%.1f C", readings.temperature);
     _display.drawCircle(66, 17, 2, SSD1306_WHITE);
 
-    // Umidade Relativa
     _display.setTextSize(1);
     _display.setCursor(4, 35);
     _display.printf("Umidade: %.1f %%", readings.humidity);
 
-    // Ponto de orvalho
     _display.setCursor(4, 46);
     _display.printf("Orvalho: %.1f C", readings.dew_point);
 
-    // Barra gráfica de umidade (0 a 100%)
     _display.drawRect(4, 56, 120, 6, SSD1306_WHITE);
     float hum_clamped = constrain(readings.humidity, 0.0f, 100.0f);
     int bar_width = (int)((hum_clamped / 100.0f) * 116.0f);
@@ -179,7 +171,6 @@ void DisplayManager::renderScreenCO2(const MHZ16Readings& readings) {
         return;
     }
 
-    // Concentração de CO2 em tamanho grande
     _display.setTextSize(2);
     _display.setCursor(4, 15);
     _display.printf("%d", readings.co2_ppm);
@@ -187,7 +178,6 @@ void DisplayManager::renderScreenCO2(const MHZ16Readings& readings) {
     _display.setCursor(76, 21);
     _display.print("ppm");
 
-    // Status / Qualidade do Ar ou Aquecimento
     _display.setCursor(4, 36);
     if (readings.is_warming_up) {
         _display.printf("Aquecendo (%ds)", readings.warmup_remaining_s);
@@ -203,7 +193,6 @@ void DisplayManager::renderScreenCO2(const MHZ16Readings& readings) {
         }
     }
 
-    // Barra visual de CO2 (escala de 400 a 2000 ppm)
     _display.drawRect(4, 48, 120, 7, SSD1306_WHITE);
     float norm = ((float)readings.co2_ppm - 400.0f) / 1600.0f;
     norm = constrain(norm, 0.0f, 1.0f);
@@ -247,22 +236,18 @@ void DisplayManager::renderScreenSystem(const BME280Readings& bme, const MHZ16Re
     _display.setCursor(4, 13);
     _display.print("ESP32-C5 (RISC-V)");
 
-    // Uptime
     uint32_t sec = millis() / 1000;
     uint32_t min = sec / 60;
     uint32_t hr = min / 60;
     _display.setCursor(4, 23);
     _display.printf("Uptime: %02lu:%02lu:%02lu", (unsigned long)hr, (unsigned long)(min % 60), (unsigned long)(sec % 60));
 
-    // Memória livre
     _display.setCursor(4, 33);
     _display.printf("Heap: %lu KB", (unsigned long)(esp_get_free_heap_size() / 1024));
 
-    // I2C Status
     _display.setCursor(4, 43);
     _display.printf("I2C: SDA:8 SCL:9 %s", bme.valid ? "(OK)" : "(!)");
 
-    // UART Status
     _display.setCursor(4, 53);
     _display.printf("UART: RX:5 TX:4 %s", co2.valid ? "(OK)" : "(!)");
 }

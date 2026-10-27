@@ -5,17 +5,14 @@
 #include "sensor_mhz16.h"
 #include "display_manager.h"
 
-// Instâncias globais dos subsistemas
 SensorBME280 sensorBME;
 SensorMHZ16  sensorCO2;
 DisplayManager displayMgr;
 
-// Dados compartilhados thread-safe
 static BME280Readings sharedBMEReadings;
 static MHZ16Readings  sharedCO2Readings;
 static portMUX_TYPE   dataMutex = portMUX_INITIALIZER_UNLOCKED;
 
-// Tarefa FreeRTOS: Aquisição periódica de sensores (1 Hz)
 void acquisitionTask(void *pvParameters) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(SENSOR_SAMPLE_RATE_MS);
@@ -24,16 +21,13 @@ void acquisitionTask(void *pvParameters) {
     for (;;) {
         cycle_count++;
 
-        // 1. Amostra o BME280 a cada ciclo (1 Hz)
         BME280Readings tempBME;
-        bool bme_ok = sensorBME.read(tempBME);
+        sensorBME.read(tempBME);
 
-        // 2. Amostra o MH-Z16 a cada 2 segundos (taxa ideal para NDIR)
         MHZ16Readings tempCO2;
         static MHZ16Readings lastValidCO2;
         if (cycle_count % 2 == 0) {
-            bool co2_ok = sensorCO2.read(tempCO2);
-            if (co2_ok) {
+            if (sensorCO2.read(tempCO2)) {
                 lastValidCO2 = tempCO2;
             } else {
                 tempCO2 = lastValidCO2;
@@ -47,18 +41,13 @@ void acquisitionTask(void *pvParameters) {
         sharedCO2Readings = tempCO2;
         portEXIT_CRITICAL(&dataMutex);
 
-        if (!bme_ok) {
-            // Serial.println("[ACQUISITION] BME280 aguardando reconexão...");
-        }
-
         vTaskDelayUntil(&xLastWakeTime, xFrequency);
     }
 }
 
-// Tarefa FreeRTOS: Atualização visual no display OLED (~12.5 Hz)
 void displayTask(void *pvParameters) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
-    const TickType_t xFrequency = pdMS_TO_TICKS(80); // ~12.5 FPS
+    const TickType_t xFrequency = pdMS_TO_TICKS(80);
 
     for (;;) {
         BME280Readings currentBME;
@@ -75,7 +64,6 @@ void displayTask(void *pvParameters) {
     }
 }
 
-// Tarefa FreeRTOS: Telemetria estruturada serial (COM9) a cada 2 segundos
 void telemetryReporterTask(void *pvParameters) {
     TickType_t xLastWakeTime = xTaskGetTickCount();
     const TickType_t xFrequency = pdMS_TO_TICKS(2000);
@@ -115,7 +103,7 @@ void telemetryReporterTask(void *pvParameters) {
 
 void setup() {
     Serial.begin(SERIAL_BAUD_RATE);
-    delay(1500); // Aguarda estabilização do canal USB-CDC nativo
+    delay(1500); // Aguarda estabilizacao do canal USB-CDC nativo
 
     Serial.println("\n==================================================");
     Serial.printf("   %s - %s\n", PROJECT_NAME, FIRMWARE_VERSION);
@@ -124,28 +112,23 @@ void setup() {
     Serial.printf("   UART Pinout: RX=GPIO %d, TX=GPIO %d (MH-Z16 NDIR CO2)\n", PIN_MHZ16_RX, PIN_MHZ16_TX);
     Serial.println("==================================================");
 
-    // 1. Barramento I2C
     if (!I2CBusManager::init()) {
         Serial.println("[MAIN] AVISO CRITICO: Falha ao inicializar o barramento I2C!");
     }
     I2CBusScanResult scan = I2CBusManager::scan();
 
-    // 2. Display OLED SSD1306
     if (displayMgr.begin(scan.oled_found ? scan.oled_addr : 0)) {
         displayMgr.showSplashScreen();
     } else {
         Serial.println("[MAIN] AVISO: Display OLED nao detectado.");
     }
 
-    // 3. Sensor BME280
     if (!sensorBME.begin(scan.bme280_found ? scan.bme280_addr : 0)) {
         Serial.println("[MAIN] AVISO: Sensor BME280 nao inicializado. Tentara reconectar em runtime.");
     }
 
-    // 4. Sensor de CO2 MH-Z16 NDIR via UART1
     sensorCO2.begin(PIN_MHZ16_RX, PIN_MHZ16_TX);
 
-    // Inicialização segura dos dados compartilhados
     sharedBMEReadings.valid = false;
     sharedBMEReadings.error_count = 0;
     sharedCO2Readings.valid = false;
@@ -153,7 +136,6 @@ void setup() {
     sharedCO2Readings.is_warming_up = true;
     sharedCO2Readings.warmup_remaining_s = MHZ16_WARMUP_SEC;
 
-    // Criação das tarefas FreeRTOS no ESP32-C5
     xTaskCreate(
         acquisitionTask,
         "AcquisitionTask",
@@ -182,7 +164,7 @@ void setup() {
     );
 
     Serial.println("[MAIN] Sistema operacional FreeRTOS em execucao!");
-    Serial.println("[MAIN] Monitorando sensores BME280 e MH-Z16...\n");
+    Serial.println("[MAIN] Monitorando sensores...\n");
 }
 
 void loop() {

@@ -9,10 +9,10 @@
 #include "sensor_mhz16.h"
 
 enum DisplayScreen {
-    SCREEN_CLIMATE = 0,    // Temperatura e Umidade com barra gráfica
-    SCREEN_CO2 = 1,        // Concentração de CO2 (ppm), qualidade do ar e warmup
-    SCREEN_BAROMETRY = 2,  // Pressão atmosférica e altitude
-    SCREEN_SYSTEM = 3,     // Diagnóstico ESP32-C5, Heap, Uptime, I2C e UART
+    SCREEN_CLIMATE = 0,
+    SCREEN_CO2 = 1,
+    SCREEN_BAROMETRY = 2,
+    SCREEN_SYSTEM = 3,
     SCREEN_COUNT = 4
 };
 
