@@ -4,7 +4,7 @@
 [![SoC](https://img.shields.io/badge/Microcontroller-ESP32--C5%20(RISC--V%20240MHz)-red.svg)](https://www.espressif.com/en/products/socs/esp32-c5)
 [![PlatformIO](https://img.shields.io/badge/PlatformIO-Core%206.1+-orange.svg)](https://platformio.org/)
 [![GUI](https://img.shields.io/badge/GUI-PyQt6%20%2B%20pyqtgraph-brightgreen.svg)](https://riverbankcomputing.com/software/pyqt/)
-[![Author](https://img.shields.io/badge/Author-xToshiro-purple.svg)](https://github.com/xToshiro)
+[![Author](https://img.shields.io/badge/Author-Jairo%20Ivo%20Castro%20Brito-purple.svg)](https://github.com/xToshiro)
 
 **Bench Monitor** is a modular, high-precision telemetry and bench validation station built around the **Espressif ESP32-C5** (32-bit RISC-V core @ 240 MHz). It integrates an on-board OLED dashboard, a shared I2C sensor bus, a dedicated UART NDIR optical Carbon Dioxide ($CO_2$) sensor, and a desktop GUI application developed in **Python (PyQt6 & pyqtgraph)** with statistical analysis and multi-format data export.
 
@@ -167,7 +167,7 @@ bench-monitor/
 
 ## 👤 Author
 
-- **Author:** [xToshiro](https://github.com/xToshiro)
+- **Author:** Jairo Ivo Castro Brito ([@xToshiro](https://github.com/xToshiro))
 - **Repository:** [https://github.com/xToshiro/bench-monitor](https://github.com/xToshiro/bench-monitor)
 
 ---

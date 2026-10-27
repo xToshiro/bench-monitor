@@ -781,7 +781,7 @@ class MainWindow(QMainWindow):
         <p style='color:#94a3b8; font-size:12px; margin-top: 0px;'><b>Estação de Telemetria e Monitoramento de Bancada</b></p>
         <hr style='border: 1px solid #334155;'>
         <table style='font-size: 12px; line-height: 1.6;'>
-            <tr><td><b>Autor:</b></td><td style='color:#38bdf8;'><b>xToshiro</b></td></tr>
+            <tr><td><b>Autor:</b></td><td style='color:#38bdf8;'><b>Jairo Ivo Castro Brito (xToshiro)</b></td></tr>
             <tr><td><b>Licença:</b></td><td>GNU General Public License v3.0 (GPLv3)</td></tr>
             <tr><td><b>Microcontrolador:</b></td><td>Espressif ESP32-C5 (RISC-V 240 MHz)</td></tr>
             <tr><td><b>Repositório:</b></td><td><a style='color:#38bdf8; text-decoration: none;' href='https://github.com/xToshiro/bench-monitor'>https://github.com/xToshiro/bench-monitor</a></td></tr>
